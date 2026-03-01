@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Desafíos · Métodos Numéricos</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --card: #1a2235;
+    --border: #2a3a55;
+    --accent: #38bdf8;
+    --accent2: #f472b6;
+    --accent3: #a78bfa;
+    --gold: #fbbf24;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --success: #34d399;
+    --error: #f87171;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(56,189,248,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(56,189,248,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; position: relative; z-index: 1; }
+
+  /* Header */
+  header {
+    text-align: center;
+    padding: 3rem 0 2rem;
+    position: relative;
+  }
+
+  .tag {
+    display: inline-block;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 0.3rem 0.8rem;
+    border-radius: 2px;
+    margin-bottom: 1.2rem;
+    animation: fadeIn 0.5s ease;
+  }
+
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    line-height: 1.1;
+    background: linear-gradient(135deg, var(--text) 40%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: fadeIn 0.6s ease 0.1s both;
+  }
+
+  .subtitle {
+    margin-top: 0.8rem;
+    color: var(--muted);
+    font-size: 0.95rem;
+    font-weight: 300;
+    animation: fadeIn 0.6s ease 0.2s both;
+  }
+
+  /* Progress bar */
+  .progress-wrap {
+    margin: 2rem 0;
+    animation: fadeIn 0.6s ease 0.3s both;
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+
+  .progress-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+    border-radius: 2px;
+    transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+    width: 0%;
+  }
+
+  /* Level tabs */
+  .tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    animation: fadeIn 0.6s ease 0.35s both;
+  }
+
+  .tab {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+
+  .tab:hover { border-color: var(--accent); color: var(--accent); }
+  .tab.active { background: var(--accent); border-color: var(--accent); color: var(--bg); font-weight: 700; }
+
+  /* Challenge cards */
+  .challenges { display: flex; flex-direction: column; gap: 1.5rem; }
+
+  .challenge-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+    animation: slideUp 0.4s ease both;
+  }
+
+  .challenge-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .challenge-card.completed { border-color: var(--success); }
+  .challenge-card.hidden { display: none; }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.2rem 1.5rem;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .card-number {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    min-width: 24px;
+  }
+
+  .card-icon {
+    font-size: 1.3rem;
+    min-width: 32px;
+    text-align: center;
+  }
+
+  .card-title-wrap { flex: 1; }
+
+  .card-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.05rem;
+    color: var(--text);
+  }
+
+  .card-meta {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.3rem;
+    flex-wrap: wrap;
+  }
+
+  .badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.58rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 2px;
+    letter-spacing: 0.05em;
+  }
+
+  .badge-level-1 { background: rgba(52,211,153,0.15); color: var(--success); }
+  .badge-level-2 { background: rgba(251,191,36,0.15); color: var(--gold); }
+  .badge-level-3 { background: rgba(244,114,182,0.15); color: var(--accent2); }
+  .badge-level-4 { background: rgba(167,139,250,0.15); color: var(--accent3); }
+  .badge-level-5 { background: rgba(248,113,113,0.15); color: var(--error); }
+  .badge-level-6 { background: rgba(56,189,248,0.15); color: var(--accent); }
+
+  .badge-topic { background: rgba(56,189,248,0.08); color: var(--muted); border: 1px solid var(--border); }
+
+  .card-toggle {
+    font-size: 0.8rem;
+    color: var(--muted);
+    transition: transform 0.3s;
+  }
+
+  .card-toggle.open { transform: rotate(180deg); }
+
+  /* Card body */
+  .card-body {
+    border-top: 1px solid var(--border);
+    padding: 1.5rem;
+    display: none;
+  }
+
+  .card-body.open { display: block; animation: fadeIn 0.3s ease; }
+
+  .challenge-text {
+    font-size: 0.92rem;
+    line-height: 1.7;
+    color: #cbd5e1;
+    margin-bottom: 1.2rem;
+  }
+
+  .hint-box {
+    background: rgba(56,189,248,0.06);
+    border-left: 3px solid var(--accent);
+    padding: 0.8rem 1rem;
+    margin-bottom: 1.2rem;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.85rem;
+    color: var(--muted);
+    display: none;
+  }
+
+  .hint-box.visible { display: block; animation: fadeIn 0.3s ease; }
+
+  .hint-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    margin-bottom: 0.3rem;
+  }
+
+  /* Answer area */
+  .answer-area {
+    width: 100%;
+    min-height: 100px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.8rem;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    resize: vertical;
+    transition: border-color 0.2s;
+    margin-bottom: 1rem;
+  }
+
+  .answer-area:focus { outline: none; border-color: var(--accent); }
+
+  .card-actions {
+    display: flex;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    padding: 0.55rem 1.2rem;
+    border-radius: 2px;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+  .btn-primary:hover { background: transparent; color: var(--accent); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border-color: var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  .btn-success {
+    background: var(--success);
+    color: var(--bg);
+    border-color: var(--success);
+  }
+
+  /* Feedback */
+  .feedback {
+    margin-top: 1rem;
+    padding: 0.8rem 1rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    display: none;
+  }
+
+  .feedback.visible { display: block; animation: fadeIn 0.3s ease; }
+  .feedback.correct { background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.3); color: #a7f3d0; }
+  .feedback.partial { background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.3); color: #fde68a; }
+
+  .check-mark { font-size: 1.2rem; margin-right: 0.5rem; }
+
+  /* Stats bar */
+  .stats {
+    display: flex;
+    gap: 1.5rem;
+    margin: 2rem 0;
+    padding: 1rem 1.5rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    animation: fadeIn 0.6s ease 0.4s both;
+    flex-wrap: wrap;
+  }
+
+  .stat { text-align: center; flex: 1; min-width: 80px; }
+
+  .stat-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.5rem;
+    color: var(--accent);
+    display: block;
+  }
+
+  .stat-label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  /* Formula display */
+  .formula {
+    font-family: 'Space Mono', monospace;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 0.5rem 0.8rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: var(--accent3);
+    display: inline-block;
+    margin: 0.2rem;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="tag">Métodos Numéricos · Parcial 1</div>
+    <h1>Desafíos de Aprendizaje</h1>
+    <p class="subtitle">Teoría de errores · Estimación de raíces · Método gráfico</p>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><span class="stat-num" id="completed-count">0</span><span class="stat-label">Completados</span></div>
+    <div class="stat"><span class="stat-num" id="total-count">0</span><span class="stat-label">Total</span></div>
+    <div class="stat"><span class="stat-num" id="pct-count">0%</span><span class="stat-label">Progreso</span></div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span>PROGRESO GENERAL</span>
+      <span id="progress-label-pct">0 / 0</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+  </div>
+
+  <!-- Filter tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="filterCards('all', this)">Todos</button>
+    <button class="tab" onclick="filterCards('conocimiento', this)">🔵 Conocimiento</button>
+    <button class="tab" onclick="filterCards('comprension', this)">🟡 Comprensión</button>
+    <button class="tab" onclick="filterCards('aplicacion', this)">🟠 Aplicación</button>
+    <button class="tab" onclick="filterCards('analisis', this)">🟣 Análisis</button>
+    <button class="tab" onclick="filterCards('sintesis', this)">🔴 Síntesis</button>
+    <button class="tab" onclick="filterCards('evaluacion', this)">🔷 Evaluación</button>
+  </div>
+
+  <div class="challenges" id="challenges-container"></div>
+</div>
+
+<script>
+const challenges = [
+  {
+    id: 1,
+    icon: "🔵",
+    title: "Tipos de errores numéricos",
+    level: "conocimiento",
+    levelLabel: "CONOCIMIENTO",
+    levelClass: "badge-level-1",
+    topic: "Teoría de errores",
+    text: `Identifica y clasifica cada situación con el tipo de error correspondiente:\n\n• Usas π ≈ 3.14 en lugar del valor exacto.\n• Al sumar 0.1 + 0.2 en un computador, obtienes 0.30000000000000004.\n• Truncas la serie 1 + x + x²/2! + x³/3! + ... después de 3 términos.\n• El sensor de temperatura mide 20.1°C en lugar del valor real de 20°C.\n\nAsigna a cada caso: error de truncamiento, error de redondeo, error por representación de punto flotante o error de medición.`,
+    hint: `Los errores se clasifican por su origen:\n• Truncamiento → cortar una serie infinita\n• Redondeo → aproximar dígitos finales\n• Punto flotante → limitaciones de la aritmética de la máquina\n• Medición → imprecisión del instrumento`,
+    feedback: `✅ Correcto:\n• π ≈ 3.14 → Error de redondeo\n• 0.1 + 0.2 ≠ 0.3 exacto → Error de representación en punto flotante\n• Truncar serie de Taylor → Error de truncamiento\n• Sensor: 20.1 vs 20 → Error de medición (datos)\n\nClave: el tipo de error depende de DÓNDE se origina, no de su magnitud.`,
+    key: "c1"
+  },
+  {
+    id: 2,
+    icon: "🟡",
+    title: "Error absoluto vs. error relativo",
+    level: "comprension",
+    levelLabel: "COMPRENSIÓN",
+    levelClass: "badge-level-2",
+    topic: "Teoría de errores",
+    text: `Un estudiante aproxima e ≈ 2.718 (valor real: 2.71828...).\n\nOtro estudiante aproxima 1000 ≈ 999 (valor real exacto: 1000).\n\na) Calcula el error absoluto y el error relativo para cada caso.\n\nb) ¿Cuál de las dos aproximaciones es "mejor" en términos relativos? Explica con tus palabras por qué el error relativo es más informativo que el absoluto en este contexto.\n\nFórmulas: |valor_real − aproximación| y |error_abs| / |valor_real|`,
+    hint: `Caso 1: |2.71828 - 2.718| = ?\nCaso 2: |1000 - 999| = 1\nLuego divide cada error absoluto por el valor real correspondiente.`,
+    feedback: `✅ Solución:\n• Caso e: E_abs ≈ 0.00028, E_rel ≈ 0.0103% (muy preciso)\n• Caso 1000: E_abs = 1, E_rel = 0.1% (menos preciso)\n\nConclusión: Aunque el error absoluto de e es menor que 1, en términos relativos sigue siendo bastante bueno. El error relativo nos dice qué fracción del valor real es el error — más útil cuando comparamos magnitudes diferentes.`,
+    key: "c2"
+  },
+  {
+    id: 3,
+    icon: "🟡",
+    title: "Interpretación del Teorema del Valor Intermedio",
+    level: "comprension",
+    levelLabel: "COMPRENSIÓN",
+    levelClass: "badge-level-2",
+    topic: "Estimación de raíces",
+    text: `Del taller: h(x) = x³ − x − 1 en [1, 2].\n\na) Calcula h(1) y h(2) y explica qué nos garantiza el TVI sobre la existencia de una raíz.\n\nb) Responde sin calcular: ¿podrías garantizar una raíz de h(x) en [0, 1]? Justifica con el TVI.\n\nc) ¿El TVI garantiza que hay exactamente UNA raíz en [1, 2], o solo que hay AL MENOS una? ¿Qué información adicional necesitarías?`,
+    hint: `TVI: Si f es continua en [a,b] y f(a)·f(b) < 0, entonces existe al menos un c ∈ (a,b) tal que f(c) = 0.`,
+    feedback: `✅ Guía de solución:\na) h(1) = -1 < 0, h(2) = 5 > 0 → cambia de signo → ∃ raíz en (1,2) ✓\nb) h(0) = -1, h(1) = -1 → mismo signo → TVI NO garantiza raíz (aunque podría haberla)\nc) TVI garantiza AL MENOS una. Para exactamente una, necesitas monotonía (h'(x) > 0 en todo el intervalo).`,
+    key: "c3"
+  },
+  {
+    id: 4,
+    icon: "🟠",
+    title: "Método de bisección paso a paso",
+    level: "aplicacion",
+    levelLabel: "APLICACIÓN",
+    levelClass: "badge-level-3",
+    topic: "Métodos para raíces",
+    text: `Para h(x) = x³ − x − 1 en [1, 2] (del taller), ejecuta manualmente las primeras 3 iteraciones del método de bisección:\n\nIteración 1: c₁ = (1+2)/2 = 1.5 → evalúa h(1.5) → ¿nuevo intervalo?\nIteración 2: repite con el nuevo intervalo\nIteración 3: repite\n\nDespués responde:\n• ¿Cuántas iteraciones se necesitan para garantizar un error ≤ 0.001? (usa la fórmula: n ≥ log₂((b-a)/ε))\n• Explica por qué el método siempre converge si se cumplen las hipótesis del TVI.`,
+    hint: `Fórmula de convergencia: n ≥ log₂((b-a)/tol)\nCon b-a=1 y tol=0.001 → n ≥ log₂(1000) ≈ 9.97 → n = 10 iteraciones.`,
+    feedback: `✅ Iteraciones:\n• c₁=1.5, h(1.5)=0.875 > 0 → nuevo intervalo [1.0, 1.5]\n• c₂=1.25, h(1.25)=-0.297 < 0 → nuevo intervalo [1.25, 1.5]\n• c₃=1.375, h(1.375)≈0.225 > 0 → nuevo intervalo [1.25, 1.375]\n\n⚠️ Nota: h(1.5) = 1.5³ − 1.5 − 1 = 3.375 − 2.5 = 0.875 > 0 (positivo, no negativo)\n\nError después de 6 iter: (2-1)/2⁶ = 1/64 ≈ 0.0156\nPara error ≤ 0.001 se necesitan n ≥ log₂(1000) ≈ 9.97 → 10 iteraciones.\nConverge siempre porque cada iteración divide el intervalo a la mitad, garantizando que la longitud → 0.`,
+    key: "c4"
+  },
+  {
+    id: 5,
+    icon: "🟠",
+    title: "Cálculo del error en serie de Taylor",
+    level: "aplicacion",
+    levelLabel: "APLICACIÓN",
+    levelClass: "badge-level-3",
+    topic: "Teoría de errores",
+    text: `Del taller: f(x) = ln(1+x), polinomio de Taylor de orden 4 centrado en a=0.\n\na) Escribe el polinomio P₄(x).\n\nb) Aproxima ln(1.3) usando P₄(0.3) y calcula:\n   • Error real: |ln(1.3) − P₄(0.3)|\n   • Cota de Lagrange: |R₄(x)| ≤ M·|x|⁵/5! donde M = max|f⁽⁵⁾| en [0, 0.3]\n\nc) ¿La cota de Lagrange sobreestima o subestima el error real?`,
+    hint: `P₄(x) = x − x²/2 + x³/3 − x⁴/4\nf⁽⁵⁾(x) = 4!/(1+x)⁵ → máximo en x=0 → M=24\nCota: 24·(0.3)⁵/120`,
+    feedback: `✅ Solución:\nP₄(0.3) = 0.3 − 0.045 + 0.009 − 0.002025 = 0.261975\nln(1.3) ≈ 0.262364\nError real ≈ 0.000389\n\nCota Lagrange: 24·(0.3⁵)/120 = 24·0.00243/120 ≈ 0.000486\n\n→ La cota SOBREESTIMA el error real (como siempre debe ocurrir — es una cota superior).`,
+    key: "c5"
+  },
+  {
+    id: 6,
+    icon: "🟣",
+    title: "Análisis y comparación de métodos",
+    level: "analisis",
+    levelLabel: "ANÁLISIS",
+    levelClass: "badge-level-4",
+    topic: "Métodos para raíces",
+    text: `Del taller: f(x) = eˣ, aproximar e⁰·⁵ con Taylor de orden 1 y orden 3.\n\na) Calcula ambas aproximaciones y sus errores absolutos.\n\nb) Ahora analiza más profundo: ¿por qué el polinomio de orden 3 es más preciso? Tu respuesta debe mencionar el término de error de Lagrange.\n\nc) Si quisieras que el error sea < 0.0001, ¿qué orden de polinomio necesitarías? Estima usando la cota |Rₙ| ≤ e⁰·⁵ · (0.5)ⁿ⁺¹ / (n+1)!`,
+    hint: `P₁(0.5) = 1 + 0.5\nP₃(0.5) = 1 + 0.5 + 0.5²/2 + 0.5³/6\ne⁰·⁵ ≈ 1.64872\nCada término extra captura más curvatura de la función.`,
+    feedback: `✅ Análisis:\nP₁(0.5) = 1.5 → Error = 0.14872\nP₃(0.5) = 1.64583 → Error ≈ 0.00289\n\nMejora: factor ~51x\n\nEl término Rₙ ∝ xⁿ⁺¹/(n+1)! → crece mucho más lento que la suma parcial. Para n=3 e x=0.5: R₃ ≤ e⁰·⁵·(0.5)⁴/24 ≈ 0.0043\n\nPara error < 0.0001: se necesita n=5 → R₅ ≤ e⁰·⁵·(0.5)⁶/720 ≈ 0.0000358 ✓ (n=4 da ~0.00043, que todavía supera el umbral)`,
+    key: "c6"
+  },
+  {
+    id: 7,
+    icon: "🔴",
+    title: "Diseña tu propio experimento",
+    level: "sintesis",
+    levelLabel: "SÍNTESIS",
+    levelClass: "badge-level-5",
+    topic: "Errores de redondeo",
+    text: `Diseña un experimento computacional para evaluar el impacto del redondeo:\n\nContexto: Calcular la derivada numérica de f(x) = sin(x) en x = π/4 usando:\n   f'(x) ≈ [f(x+h) − f(x)] / h\n\nTu diseño debe incluir:\n1. ¿Qué valores de h vas a probar? (propón al menos 5, desde grandes a muy pequeños)\n2. ¿Cómo medirás el error en cada caso? (el valor exacto es cos(π/4) ≈ 0.7071)\n3. ¿Qué comportamiento esperas ver al hacer h muy pequeño? (pista: hay dos fuerzas en competencia)\n4. ¿Cuál sería el h "óptimo"? ¿Cómo lo encontrarías?`,
+    hint: `Cuando h → 0 hay dos efectos opuestos:\n• Error de truncamiento de la fórmula → disminuye\n• Error de cancelación numérica (redondeo) → aumenta\nEl óptimo está en el equilibrio entre ambos.`,
+    feedback: `✅ Diseño esperado:\n1. h = [0.1, 0.01, 0.001, 1e-7, 1e-14, 1e-16]\n2. Error = |f'_aprox − cos(π/4)|\n3. Para h muy pequeño: f(x+h) ≈ f(x), la diferencia pierde dígitos significativos → error CRECE por cancelación catastrófica\n4. h óptimo ≈ √(ε_máquina) ≈ 1.5×10⁻⁸ para flotante de 64 bits\n\nEste experimento demuestra que "más precisión en h" no siempre es mejor — los errores de redondeo pueden dominar.`,
+    key: "c7"
+  },
+  {
+    id: 8,
+    icon: "🔷",
+    title: "Crítica de un método numérico",
+    level: "evaluacion",
+    levelLabel: "EVALUACIÓN",
+    levelClass: "badge-level-6",
+    topic: "Estimación de raíces",
+    text: `Un estudiante propone usar siempre el método de bisección para encontrar raíces porque "siempre converge".\n\nTu tarea: escribe una crítica fundamentada de esta afirmación. Debes abordar:\n\na) ¿Cuándo es cierto que bisección converge? ¿Qué condiciones se requieren?\n\nb) ¿Cuáles son las limitaciones prácticas del método? (velocidad de convergencia, requisitos)\n\nc) Propón al menos un escenario donde bisección falla o es inapropiado.\n\nd) ¿Qué método alternativo usarías y en qué situación? (menciona al menos uno que conozcas o hayas visto: Newton-Raphson, secante, punto fijo, etc.)\n\nUsa argumentos cuantitativos donde puedas.`,
+    hint: `Piensa en: ¿qué pasa si la función no cambia de signo aunque tenga raíz? (raíces de multiplicidad par). ¿Qué tan rápido converge bisección vs Newton? Bisección: lineal (1 bit por iter). Newton: cuadrática (dobla dígitos correctos por iter).`,
+    feedback: `✅ Crítica esperada:\na) Converge SI: f continua en [a,b], f(a)·f(b) < 0. Eso garantiza raíz simple.\nb) Limitaciones: convergencia lineal (lenta para alta precisión), necesita intervalo inicial con cambio de signo.\nc) Falla: f(x) = x² en [-1,1] → raíz en 0 pero f(-1)·f(1) = 1 > 0. También raíces complejas o múltiples.\nd) Newton-Raphson: convergencia cuadrática, ideal si f' disponible y se tiene buena estimación inicial. Secante: no requiere derivada analítica.`,
+    key: "c8"
+  }
+];
+
+let completedSet = new Set(JSON.parse(localStorage.getItem('mn_completed') || '[]'));
+let currentFilter = 'all';
+
+function saveCompleted() {
+  try { localStorage.setItem('mn_completed', JSON.stringify([...completedSet])); } catch(e) {}
+}
+
+function updateStats() {
+  const visible = document.querySelectorAll('.challenge-card:not(.hidden)').length;
+  const completedVisible = document.querySelectorAll('.challenge-card:not(.hidden).completed').length;
+  document.getElementById('completed-count').textContent = completedSet.size;
+  document.getElementById('total-count').textContent = challenges.length;
+  const pct = challenges.length ? Math.round(completedSet.size / challenges.length * 100) : 0;
+  document.getElementById('pct-count').textContent = pct + '%';
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label-pct').textContent = `${completedSet.size} / ${challenges.length}`;
+}
+
+function filterCards(level, btn) {
+  currentFilter = level;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.challenge-card').forEach(card => {
+    const cardLevel = card.dataset.level;
+    if (level === 'all' || cardLevel === level) {
+      card.classList.remove('hidden');
+    } else {
+      card.classList.add('hidden');
+    }
+  });
+  updateStats();
+}
+
+function toggleCard(id) {
+  const body = document.getElementById(`body-${id}`);
+  const toggle = document.getElementById(`toggle-${id}`);
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  toggle.classList.toggle('open', !isOpen);
+}
+
+function showHint(id) {
+  document.getElementById(`hint-${id}`).classList.add('visible');
+}
+
+function showFeedback(id) {
+  document.getElementById(`feedback-${id}`).classList.add('visible');
+  document.getElementById(`feedback-${id}`).classList.add('correct');
+}
+
+function markDone(id, key) {
+  completedSet.add(key);
+  saveCompleted();
+  document.getElementById(`card-${id}`).classList.add('completed');
+  document.getElementById(`done-btn-${id}`).style.display = 'none';
+  const doneMsg = document.getElementById(`done-msg-${id}`);
+  doneMsg.style.display = 'inline-block';
+  updateStats();
+}
+
+function renderChallenges() {
+  const container = document.getElementById('challenges-container');
+  container.innerHTML = '';
+
+  challenges.forEach((c, i) => {
+    const isCompleted = completedSet.has(c.key);
+    const delay = i * 0.07;
+    const card = document.createElement('div');
+    card.className = `challenge-card ${isCompleted ? 'completed' : ''}`;
+    card.id = `card-${c.id}`;
+    card.dataset.level = c.level;
+    card.style.animationDelay = `${delay}s`;
+
+    const escapedText = c.text.replace(/\n/g, '<br>');
+    const escapedHint = c.hint.replace(/\n/g, '<br>');
+    const escapedFeedback = c.feedback.replace(/\n/g, '<br>');
+
+    card.innerHTML = `
+      <div class="card-header" onclick="toggleCard(${c.id})">
+        <span class="card-number">0${c.id}</span>
+        <span class="card-icon">${c.icon}</span>
+        <div class="card-title-wrap">
+          <div class="card-title">${c.title}</div>
+          <div class="card-meta">
+            <span class="badge ${c.levelClass}">${c.levelLabel}</span>
+            <span class="badge badge-topic">${c.topic}</span>
+            ${isCompleted ? '<span class="badge badge-level-1">✓ COMPLETADO</span>' : ''}
+          </div>
+        </div>
+        <span class="card-toggle" id="toggle-${c.id}">▼</span>
+      </div>
+      <div class="card-body" id="body-${c.id}">
+        <p class="challenge-text">${escapedText}</p>
+        <div class="hint-box" id="hint-${c.id}">
+          <div class="hint-label">💡 PISTA</div>
+          ${escapedHint}
+        </div>
+        <textarea class="answer-area" placeholder="Escribe tu solución aquí..."></textarea>
+        <div class="card-actions">
+          <button class="btn btn-primary" onclick="showFeedback(${c.id})">Ver solución</button>
+          <button class="btn btn-ghost" onclick="showHint(${c.id})">Pista</button>
+          <button class="btn btn-success" id="done-btn-${c.id}" onclick="markDone(${c.id}, '${c.key}')" ${isCompleted ? 'style="display:none"' : ''}>Marcar como completado</button>
+          <span id="done-msg-${c.id}" ${isCompleted ? '' : 'style="display:none"'} style="font-family:Space Mono,monospace;font-size:0.7rem;color:var(--success);padding:0.55rem 0">✓ Completado</span>
+        </div>
+        <div class="feedback" id="feedback-${c.id}">${escapedFeedback}</div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+
+  document.getElementById('total-count').textContent = challenges.length;
+  updateStats();
+}
+
+renderChallenges();
+</script>
+</body>
+</html>
